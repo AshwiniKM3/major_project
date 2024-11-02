@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>History</title>
+</head>
+<body>
+    <h1>History</h1>
+    <form method="GET" action="{% url 'history' %}">
+        <label for="status">Select Status:</label>
+        <select name="status" id="status" onchange="this.form.submit()">
+            <option value="missed" {% if selected_status == 'missed' %}selected{% endif %}>Missed Entries</option>
+            <option value="canceled" {% if selected_status == 'canceled' %}selected{% endif %}>Canceled Entries</option>
+            <option value="entered" {% if selected_status == 'entered' %}selected{% endif %}>Successfully Entered Entries</option>
+        </select>
+    </form>
+    
+    <table>
+        <thead>
+            <tr>
+                <th>Date-Time of Joining</th>
+                <th>Number of People</th>
+                <th>Time Slot Given</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for entry in entries %}
+            <tr>
+                <td>{{ entry.date_time }}</td>
+                <td>{{ entry.num_people }}</td>
+                <td>{{ entry.time_slot }}</td>
+                <td>{{ entry.status }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4">No entries found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <a href="{% url 'home' %}">Go Back Home</a>
+</body>
+</html>

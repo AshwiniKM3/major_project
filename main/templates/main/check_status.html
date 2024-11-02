@@ -1,0 +1,184 @@
+<style>
+  .queue-status {
+    margin: 20px;
+    font-family: Arial, sans-serif;
+  }
+
+  .timers {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+
+  .timer {
+    flex: 1;
+    padding: 10px;
+    border: 2px solid #ccc;
+    border-radius: 8px;
+    text-align: center;
+    margin: 0 10px;
+  }
+
+  .people-ahead-box {
+    background-color: #f0f8ff;
+    padding: 15px;
+    border: 2px solid blue;
+    border-radius: 8px;
+    text-align: center;
+    margin-bottom: 20px;
+  }
+
+  .status {
+    padding: 5px 10px;
+    border-radius: 5px;
+    color: white;
+  }
+  .status.waiting {
+    background-color: lightblue;
+  }
+  .status.opened {
+    background-color: green;
+  }
+  .status.missed {
+    background-color: red;
+  }
+
+  .qr-code {
+    max-width: 150px; /* Adjust size as needed */
+    margin: 10px 0;
+  }
+
+  .download-button {
+    display: inline-block;
+    padding: 10px 15px;
+    background-color: #007bff;
+    color: white;
+    border-radius: 5px;
+    text-decoration: none;
+    margin-top: 10px;
+  }
+
+  .download-button:hover {
+    background-color: #0056b3;
+  }
+</style>
+<script>
+  function formatTime(seconds) {
+        const hours = Math.floor(seconds / 3600);
+        const minutes = Math.floor((seconds % 3600) / 60);
+        const secs = seconds % 60;
+        return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+    }
+        function updateRemainingTime() {
+          const timeSlotStart = new Date('{{ time_slot_start_r }}'); // Pass this from Django
+    const timeSlotEnd = new Date('{{ time_slot_end_r }}');
+    const currentTime = new Date();
+    let remainingTime = Math.max(0, (timeSlotStart - currentTime) / 1000); // Convert to seconds
+    let remainingTimeClose = Math.max(0, (timeSlotEnd - currentTime) / 1000); // Convert to seconds
+    document.getElementById('remaining-time').textContent = Math.floor(remainingTime);
+    document.getElementById('remaining-time-close').textContent = Math.floor(remainingTimeClose);
+
+    const remainingTimeElement = document.getElementById('remaining-time');
+    const remainingTimeCloseElement = document.getElementById('remaining-time-close');
+    
+    // If there is time left until the slot opens
+    if (remainingTime > 0) {
+      remainingTimeElement.textContent = formatTime(Math.floor(remainingTime));
+        remainingTimeCloseElement.style.display = "none"; // Hide closing time until opening time is 0
+    } else {
+        // When opening time is 0, show remaining closing time
+        remainingTimeElement.style.display = "none"; // Hide opening time
+        remainingTimeCloseElement.style.display = "block"; // Show closing time
+        remainingTimeCloseElement.textContent = formatTime(Math.floor(remainingTimeClose));
+        
+        // Update closing time
+        if (remainingTimeClose > 0) {
+            remainingTimeClose -= 1; // Decrease closing time
+            remainingTimeCloseElement.textContent = formatTime(Math.floor(remainingTimeClose));
+        }
+    }
+
+    // If the closing time reaches 0, you might want to hide or update accordingly
+    if (remainingTimeClose <= 0) {
+        remainingTimeCloseElement.style.display = "none"; // Optionally hide the close timer if needed
+    }
+}
+function updateStatusColor(status) {
+    const statusElement = document.getElementById('status');
+    statusElement.className = 'status ' + status; // Update the class to change the background color
+}
+// Function to fetch and update real-time data from the server
+function fetchRealTimeData() {
+    fetch(`/get-realtime-data/?t=${new Date().getTime()}`) // Add timestamp for cache busting
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                console.error('Error fetching data:', data.error);
+                return;
+            }
+            document.getElementById('status').textContent = data.status;
+            document.getElementById('people-ahead').textContent = data.people_ahead;
+            updateStatusColor(data.status);
+        })
+        .catch(error => console.error('Error fetching real-time data:', error));
+}
+// Function to update the visual representation of people ahead
+function updateQueueVisual(peopleAhead, totalInQueue) {
+    const queueVisual = document.getElementById('queue-visual');
+    queueVisual.style.width = (peopleAhead / totalInQueue) * 100 + '%'; // Set width based on people ahead
+    queueVisual.textContent = `${peopleAhead} people ahead`;
+}
+// Update the remaining time every second
+setInterval(updateRemainingTime, 1000);
+
+// Fetch and update real-time data every 5 seconds
+setInterval(fetchRealTimeData, 5000);
+
+</script>
+
+
+
+{% block content %}
+  {% if message %}
+    <h2>{{ message }}</h2>
+    <p>Currently, there are {{ queue_length }} people in the queue.</p>
+    <a href="{% url 'join_queue' %}">Join Queue Now</a>
+    <a href="{% url 'home' %}">Go Back Home</a>
+  {% else %}
+    <h2>Queue Status</h2>
+    
+    <div class="queue-status">
+      <div class="qr-code-container">
+        <h3>QR Code</h3>
+        <img src="{{ qr_code_url }}" alt="QR Code" class="qr-code">
+        <br>
+        <a href="{% url 'download_qr_code' %}" class="download-button">Download QR Code</a>
+      </div>
+      
+      <p>Joined Queue at: <strong>{{ joined_timestamp }}</strong></p>
+      <p>UserID: <strong>{{ user_id }}</strong></p>
+      <p>Number of people: <strong>{{ number_of_people }}</strong></p>
+      <p>Given time-slot: <strong>{{ time_slot_start }} - {{ time_slot_end }}</strong></p>
+      
+      <div class="timers">
+        <div class="timer">
+          <p>Remaining time till your slot opens:</p>
+          <span id="remaining-time">{{ remaining_time_seconds }}</span> seconds
+        </div>
+        <div class="timer">
+          <p>Remaining time till your slot closes:</p>
+          <span id="remaining-time-close">{{ remaining_time_seconds_close }}</span> seconds
+        </div>
+      </div>
+      
+      <div class="people-ahead-box">
+        <p>Number of people ahead:</p>
+        <span id="people-ahead">{{ people_ahead }}</span>
+      </div>
+
+      <p class="status-label">Status: <span id="status" class="status {{ status }}">{{ status }}</span></p>
+    </div>
+    
+    <a href="{% url 'home' %}">Go Back Home</a>
+  {% endif %}
+{% endblock %}

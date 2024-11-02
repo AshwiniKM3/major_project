@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Joined Queue</title>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const userId = "{{ user_id }}";
+            const apiUrl = `/api/queue-status/${userId}/`;
+            
+           
+
+        
+            // Get the start and end time from the time slot passed from Django
+            const timeSlotRange = "{{ time_slot }}";  // Example: "08:38 - 08:40"
+            const [start, end] = timeSlotRange.split(" - ");
+
+            // Update the time slot display directly as provided by Django
+            document.getElementById('time_slot').textContent = timeSlotRange;
+
+            // Convert the start time to a Date object for calculations
+            const [startHour, startMinute] = start.split(":").map(Number);
+            const [endHour, endMinute] = end.split(":").map(Number);
+
+            const timeSlotStart = new Date();
+            timeSlotStart.setHours(startHour, startMinute, 0, 0);
+
+            const timeSlotEnd = new Date();
+            timeSlotEnd.setHours(endHour, endMinute, 0, 0);
+        });
+    </script>
+</head>
+<body>
+    <h1>Queue Joined Successfully!</h1>
+    <p>{{ user_id }} you have successfully joined the queue with email: {{ email }} number of people: {{ number_of_people }} at {{ timestamp }}</p>
+    <p>Your Time Slot is: <span id="time_slot">{{ time_slot }}</span></p>
+    <!-- Download QR Code -->
+    <p>Your QR Code is ready:</p>
+    {% load static %}
+<img src="{% static qr_code_path %}" alt="QR Code" />
+
+<a href="{% static qr_code_path %}" download="{{ user_id }}_qrcode.png">
+    <button>Download QR Code</button>
+</a>
+
+    <a href="{% url 'home' %}">Go Back Home</a>
+</body>
+</html>

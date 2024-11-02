@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Queueasy</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f5f5f5;
+        }
+        .container {
+            text-align: center;
+        }
+        .navbar {
+            position: absolute;
+            top: 0;
+            right: 0;
+            margin: 20px;
+        }
+        .navbar a {
+            margin: 0 10px;
+            text-decoration: none;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        {% if user.is_authenticated %}
+            <a href="{% url 'logout' %}">Logout</a>
+        {% else %}
+            <a href="{% url 'login' %}">Login</a>
+            <a href="{% url 'register' %}">Register</a>
+        {% endif %}
+    </div>
+    <div class="container">
+        <h1>Welcome to Venue Booking System</h1>
+        <p>Manage your entry with ease and avoid crowd issues!</p>
+    </div>
+    <h1>Welcome to Queueasy</h1>
+    <p>Click below to join the queue now</p>
+    <a href="{% url 'join_queue' %}">
+        <button>Join Queue Now</button>
+    </a>
+    <a href="{% url 'check_status' %}"><button>Check Status</button></a>
+    <a href="{% url 'history' %}"><button>Check History</button></a>
+</body>
+</html>
